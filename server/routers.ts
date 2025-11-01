@@ -86,20 +86,9 @@ export const appRouter = router({
     getListTasks: protectedProcedure
       .input(z.object({ listId: z.number() }))
       .query(async ({ input }) => {
+        // getListTasks already returns tasks with recursive subtasks loaded
         const tasks = await getListTasks(input.listId);
-        
-        // Enrich each task with its subtasks
-        const tasksWithSubtasks = await Promise.all(
-          tasks.map(async (task) => {
-            const subtasks = await getSubtasks(task.id);
-            return {
-              ...task,
-              subtasks,
-            };
-          })
-        );
-
-        return tasksWithSubtasks;
+        return tasks;
       }),
 
     /**

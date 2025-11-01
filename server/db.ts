@@ -152,11 +152,40 @@ export async function getListTasks(listId: number) {
   const db = await getDb();
   if (!db) return [];
 
-  return await db
+  const topLevelTasks = await db
     .select()
     .from(tasks)
     .where(and(eq(tasks.listId, listId), isNull(tasks.parentTaskId)))
     .orderBy(asc(tasks.order));
+
+  const tasksWithSubtasks = await Promise.all(
+    topLevelTasks.map(async (task) => ({
+      ...task,
+      subtasks: await getTaskSubtasksRecursive(task.id),
+    }))
+  );
+
+  return tasksWithSubtasks;
+}
+
+async function getTaskSubtasksRecursive(parentTaskId: number): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const subtasks = await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.parentTaskId, parentTaskId))
+    .orderBy(asc(tasks.order));
+
+  const subtasksWithChildren = await Promise.all(
+    subtasks.map(async (subtask) => ({
+      ...subtask,
+      subtasks: await getTaskSubtasksRecursive(subtask.id),
+    }))
+  );
+
+  return subtasksWithChildren;
 }
 
 /**

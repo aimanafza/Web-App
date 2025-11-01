@@ -328,11 +328,11 @@ export default function Home() {
                       onToggleExpand={() => toggleTaskExpanded(task.id)}
                       onToggleComplete={() => handleToggleTask(task.id)}
                       onDelete={() => handleDeleteTask(task.id)}
-                      onCreateSubtask={async (title: string) => {
+                      onCreateSubtask={async (title: string, parentId?: number) => {
                         await createTaskMutation.mutateAsync({
                           listId: selectedListId,
                           title,
-                          parentTaskId: task.id,
+                          parentTaskId: parentId || task.id,
                         });
                       }}
                       onMoveTask={() => setMoveTaskId(task.id)}

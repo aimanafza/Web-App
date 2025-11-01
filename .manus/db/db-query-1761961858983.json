@@ -1,0 +1,94 @@
+{
+  "query": "SELECT id, title, parentTaskId, listId FROM tasks WHERE listId = 1 ORDER BY id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user JMy58ok9gVgwnwz.root --database mAetnisrT38E7cemQhGE2E --execute SELECT id, title, parentTaskId, listId FROM tasks WHERE listId = 1 ORDER BY id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "14",
+      "title": "Fresh 2kg carrot",
+      "parentTaskId": "10",
+      "listId": "1"
+    },
+    {
+      "id": "13",
+      "title": "Organic carrot 2kg",
+      "parentTaskId": "10",
+      "listId": "1"
+    },
+    {
+      "id": "12",
+      "title": "green one",
+      "parentTaskId": "4",
+      "listId": "1"
+    },
+    {
+      "id": "11",
+      "title": "pink one",
+      "parentTaskId": "4",
+      "listId": "1"
+    },
+    {
+      "id": "10",
+      "title": "2kg",
+      "parentTaskId": "4",
+      "listId": "1"
+    },
+    {
+      "id": "9",
+      "title": "Organic 2% milk",
+      "parentTaskId": "1",
+      "listId": "1"
+    },
+    {
+      "id": "8",
+      "title": "Rice",
+      "parentTaskId": "NULL",
+      "listId": "1"
+    },
+    {
+      "id": "7",
+      "title": "1% fat",
+      "parentTaskId": "1",
+      "listId": "1"
+    },
+    {
+      "id": "6",
+      "title": "@ pieces",
+      "parentTaskId": "3",
+      "listId": "1"
+    },
+    {
+      "id": "5",
+      "title": "Almond Milk",
+      "parentTaskId": "1",
+      "listId": "1"
+    },
+    {
+      "id": "4",
+      "title": "Carrot",
+      "parentTaskId": "NULL",
+      "listId": "1"
+    },
+    {
+      "id": "3",
+      "title": "Broccoli",
+      "parentTaskId": "NULL",
+      "listId": "1"
+    },
+    {
+      "id": "2",
+      "title": "2% milk",
+      "parentTaskId": "1",
+      "listId": "1"
+    },
+    {
+      "id": "1",
+      "title": "Whole Milk",
+      "parentTaskId": "NULL",
+      "listId": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tparentTaskId\tlistId\n14\tFresh 2kg carrot\t10\t1\n13\tOrganic carrot 2kg\t10\t1\n12\tgreen one\t4\t1\n11\tpink one\t4\t1\n10\t2kg\t4\t1\n9\tOrganic 2% milk\t1\t1\n8\tRice\tNULL\t1\n7\t1% fat\t1\t1\n6\t@ pieces\t3\t1\n5\tAlmond Milk\t1\t1\n4\tCarrot\tNULL\t1\n3\tBroccoli\tNULL\t1\n2\t2% milk\t1\t1\n1\tWhole Milk\tNULL\t1\n",
+  "stderr": "",
+  "execution_time_ms": 353
+}

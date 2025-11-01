@@ -1,0 +1,25 @@
+{
+  "query": "SELECT id, title, parentTaskId FROM tasks WHERE title IN ('Fresh 2kg carrot', 'Organic carrot 2kg', '2kg') ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user JMy58ok9gVgwnwz.root --database mAetnisrT38E7cemQhGE2E --execute SELECT id, title, parentTaskId FROM tasks WHERE title IN ('Fresh 2kg carrot', 'Organic carrot 2kg', '2kg') ORDER BY id;",
+  "rows": [
+    {
+      "id": "10",
+      "title": "2kg",
+      "parentTaskId": "4"
+    },
+    {
+      "id": "13",
+      "title": "Organic carrot 2kg",
+      "parentTaskId": "10"
+    },
+    {
+      "id": "14",
+      "title": "Fresh 2kg carrot",
+      "parentTaskId": "10"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tparentTaskId\n10\t2kg\t4\n13\tOrganic carrot 2kg\t10\n14\tFresh 2kg carrot\t10\n",
+  "stderr": "",
+  "execution_time_ms": 342
+}
