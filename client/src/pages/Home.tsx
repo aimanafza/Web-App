@@ -31,6 +31,7 @@ export default function Home() {
   const [expandedTasks, setExpandedTasks] = useState<Set<number>>(new Set());
   const [moveTaskId, setMoveTaskId] = useState<number | null>(null);
   const [moveTargetListId, setMoveTargetListId] = useState<string>("");
+  const [deleteTaskId, setDeleteTaskId] = useState<number | null>(null);
 
   // Queries
   const { data: lists = [], isLoading: listsLoading, refetch: refetchLists } = trpc.todoList.getAll.useQuery(
@@ -140,8 +141,13 @@ export default function Home() {
   };
 
   const handleDeleteTask = async (taskId: number) => {
-    if (confirm("Are you sure you want to delete this task?")) {
-      await deleteTaskMutation.mutateAsync({ taskId });
+    setDeleteTaskId(taskId);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (deleteTaskId) {
+      await deleteTaskMutation.mutateAsync({ taskId: deleteTaskId });
+      setDeleteTaskId(null);
     }
   };
 
@@ -326,8 +332,8 @@ export default function Home() {
                       task={task}
                       isExpanded={expandedTasks.has(task.id)}
                       onToggleExpand={() => toggleTaskExpanded(task.id)}
-                      onToggleComplete={() => handleToggleTask(task.id)}
-                      onDelete={() => handleDeleteTask(task.id)}
+                      onToggleComplete={handleToggleTask}
+                      onDelete={handleDeleteTask}
                       onCreateSubtask={async (title: string, parentId?: number) => {
                         await createTaskMutation.mutateAsync({
                           listId: selectedListId,
@@ -338,6 +344,7 @@ export default function Home() {
                       onMoveTask={() => setMoveTaskId(task.id)}
                       lists={lists}
                       refetchTasks={refetchTasks}
+                      listId={selectedListId || undefined}
                     />
                   ))
                 )}
@@ -350,6 +357,34 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Delete Task Dialog */}
+      {deleteTaskId && (
+        <Dialog open={deleteTaskId !== null} onOpenChange={() => setDeleteTaskId(null)}>
+          <DialogContent className="bg-slate-800 border-slate-700">
+            <DialogHeader>
+              <DialogTitle>Delete Task</DialogTitle>
+              <DialogDescription>Are you sure you want to delete this task? This action cannot be undone.</DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-3">
+              <Button
+                onClick={confirmDeleteTask}
+                disabled={deleteTaskMutation.isPending}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                Delete
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteTaskId(null)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Move Task Dialog */}
       {moveTaskId && (

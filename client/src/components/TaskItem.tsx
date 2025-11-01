@@ -16,12 +16,13 @@ interface TaskItemProps {
   task: Task;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  onToggleComplete: () => void;
-  onDelete: () => void;
+  onToggleComplete: (taskId: number) => void;
+  onDelete: (taskId: number) => void;
   onCreateSubtask: (title: string, parentId?: number) => Promise<void>;
   onMoveTask: () => void;
   lists: any[];
   refetchTasks: () => void;
+  listId?: number;
 }
 
 export default function TaskItem({
@@ -34,6 +35,7 @@ export default function TaskItem({
   onMoveTask,
   lists,
   refetchTasks,
+  listId,
 }: TaskItemProps) {
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState("");
@@ -135,8 +137,8 @@ export default function TaskItem({
 
         {/* Checkbox */}
         <button
-          onClick={onToggleComplete}
-          className="text-slate-400 hover:text-white transition-colors flex-shrink-0"
+          onClick={() => onToggleComplete(task.id)}
+          className="text-slate-300 hover:text-white transition-colors flex-shrink-0"
         >
           {task.completed ? (
             <CheckCircle2 className="w-5 h-5 text-green-500" />
@@ -190,13 +192,13 @@ export default function TaskItem({
             </svg>
           </button>
 
-          {/* Delete */}
+          {/* Delete Button */}
           <button
-            onClick={onDelete}
+            onClick={() => onDelete(task.id)}
             className="p-2 bg-red-600 hover:bg-red-700 rounded transition-colors text-white"
             title="Delete"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -229,22 +231,12 @@ export default function TaskItem({
             <SubtaskItem
               key={subtask.id}
               task={subtask}
-              onToggleComplete={async () => {
-                const toggleMutation = trpc.task.toggleCompletion.useMutation({
-                  onSuccess: () => refetchTasks(),
-                });
-                await toggleMutation.mutateAsync({ taskId: subtask.id });
-              }}
-              onDelete={async () => {
-                if (confirm("Delete this subtask?")) {
-                  const deleteMutation = trpc.task.delete.useMutation({
-                    onSuccess: () => refetchTasks(),
-                  });
-                  await deleteMutation.mutateAsync({ taskId: subtask.id });
-                }
-              }}
+              parentTaskId={task.id}
+              onToggleComplete={onToggleComplete}
+              onDelete={onDelete}
               onCreateSubtask={onCreateSubtask}
               refetchTasks={refetchTasks}
+              listId={listId}
             />
           ))}
         </div>
@@ -255,14 +247,18 @@ export default function TaskItem({
 
 interface SubtaskItemProps {
   task: Task;
-  onToggleComplete: () => void;
-  onDelete: () => void;
+  parentTaskId?: number;
+  listId?: number;
+  onToggleComplete: (taskId: number) => void;
+  onDelete: (taskId: number) => void;
   onCreateSubtask: (title: string, parentId?: number) => Promise<void>;
   refetchTasks: () => void;
 }
 
 function SubtaskItem({
   task,
+  parentTaskId,
+  listId,
   onToggleComplete,
   onDelete,
   onCreateSubtask,
@@ -365,7 +361,7 @@ function SubtaskItem({
 
         {/* Checkbox */}
         <button
-          onClick={onToggleComplete}
+          onClick={() => onToggleComplete(task.id)}
           className="text-slate-300 hover:text-white transition-colors flex-shrink-0"
         >
           {task.completed ? (
@@ -413,7 +409,7 @@ function SubtaskItem({
 
           {/* Delete */}
           <button
-            onClick={onDelete}
+            onClick={() => onDelete(task.id)}
             className="p-1 bg-red-600 hover:bg-red-700 rounded transition-colors text-white text-xs"
             title="Delete"
           >
@@ -449,20 +445,10 @@ function SubtaskItem({
             <SubtaskItem
               key={subtask.id}
               task={subtask}
-              onToggleComplete={async () => {
-                const toggleMutation = trpc.task.toggleCompletion.useMutation({
-                  onSuccess: () => refetchTasks(),
-                });
-                await toggleMutation.mutateAsync({ taskId: subtask.id });
-              }}
-              onDelete={async () => {
-                if (confirm("Delete this subtask?")) {
-                  const deleteMutation = trpc.task.delete.useMutation({
-                    onSuccess: () => refetchTasks(),
-                  });
-                  await deleteMutation.mutateAsync({ taskId: subtask.id });
-                }
-              }}
+              parentTaskId={task.id}
+              listId={listId}
+              onToggleComplete={onToggleComplete}
+              onDelete={onDelete}
               onCreateSubtask={onCreateSubtask}
               refetchTasks={refetchTasks}
             />

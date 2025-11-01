@@ -33,6 +33,11 @@
 - [x] Edit button (blue pencil) doesn't work - need inline editing
 - [x] Sub-subtask creation (3-level hierarchy) - Add button doesn't work for subtasks of subtasks
 
+## New Bugs Found
+- [ ] Delete button doesn't work - confirmation appears but deletion doesn't execute
+- [ ] Checkbox for subtasks/sub-subtasks doesn't work - can't mark them as complete
+- [ ] Cascading completion - when parent marked done, children should auto-complete
+
 ## Testing
 - [x] Test registration flow
 - [x] Test login flow
