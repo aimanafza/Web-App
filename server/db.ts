@@ -295,6 +295,19 @@ export async function getTaskWithSubtasks(taskId: number): Promise<any> {
 }
 
 /**
+ * Update task title
+ */
+export async function updateTaskTitle(taskId: number, title: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(tasks).set({ title }).where(eq(tasks.id, taskId));
+
+  const updated = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  return updated[0];
+}
+
+/**
  * Calculate completion stats for a list
  */
 export async function getListStats(listId: number) {

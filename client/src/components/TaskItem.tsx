@@ -18,7 +18,7 @@ interface TaskItemProps {
   onToggleExpand: () => void;
   onToggleComplete: () => void;
   onDelete: () => void;
-  onCreateSubtask: (title: string) => Promise<void>;
+  onCreateSubtask: (title: string, parentId?: number) => Promise<void>;
   onMoveTask: () => void;
   lists: any[];
   refetchTasks: () => void;
@@ -38,6 +38,19 @@ export default function TaskItem({
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState("");
   const [isCreatingSubtask, setIsCreatingSubtask] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+
+  const updateTaskMutation = trpc.task.update.useMutation({
+    onSuccess: () => {
+      setIsEditing(false);
+      refetchTasks();
+      toast.success("Task updated!");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const hasSubtasks = task.subtasks && task.subtasks.length > 0;
 
@@ -48,7 +61,7 @@ export default function TaskItem({
     }
     setIsCreatingSubtask(true);
     try {
-      await onCreateSubtask(subtaskTitle);
+      await onCreateSubtask(subtaskTitle, task.id);
       setSubtaskTitle("");
       setShowSubtaskInput(false);
     } catch (error) {
@@ -57,6 +70,50 @@ export default function TaskItem({
       setIsCreatingSubtask(false);
     }
   };
+
+  const handleUpdateTask = async () => {
+    if (!editTitle.trim()) {
+      toast.error("Task title cannot be empty");
+      return;
+    }
+    await updateTaskMutation.mutateAsync({
+      taskId: task.id,
+      title: editTitle,
+    });
+  };
+
+  if (isEditing) {
+    return (
+      <div className="bg-slate-700 rounded-lg p-4 border border-slate-600">
+        <div className="flex items-center gap-3">
+          <Input
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleUpdateTask()}
+            className="bg-slate-600 border-slate-500 text-white placeholder:text-slate-400"
+            autoFocus
+          />
+          <Button
+            onClick={handleUpdateTask}
+            disabled={updateTaskMutation.isPending}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            Save
+          </Button>
+          <Button
+            onClick={() => {
+              setIsEditing(false);
+              setEditTitle(task.title);
+            }}
+            variant="outline"
+            className="bg-slate-600 hover:bg-slate-500 text-white border-slate-500"
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-slate-700 rounded-lg p-4 border border-slate-600">
@@ -119,6 +176,7 @@ export default function TaskItem({
 
           {/* Edit */}
           <button
+            onClick={() => setIsEditing(true)}
             className="p-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-white"
             title="Edit"
           >
@@ -172,7 +230,6 @@ export default function TaskItem({
               key={subtask.id}
               task={subtask}
               onToggleComplete={async () => {
-                // Toggle subtask completion
                 const toggleMutation = trpc.task.toggleCompletion.useMutation({
                   onSuccess: () => refetchTasks(),
                 });
@@ -200,7 +257,7 @@ interface SubtaskItemProps {
   task: Task;
   onToggleComplete: () => void;
   onDelete: () => void;
-  onCreateSubtask: (title: string) => Promise<void>;
+  onCreateSubtask: (title: string, parentId?: number) => Promise<void>;
   refetchTasks: () => void;
 }
 
@@ -214,6 +271,19 @@ function SubtaskItem({
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+
+  const updateTaskMutation = trpc.task.update.useMutation({
+    onSuccess: () => {
+      setIsEditing(false);
+      refetchTasks();
+      toast.success("Task updated!");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const hasSubtasks = task.subtasks && task.subtasks.length > 0;
 
@@ -223,13 +293,57 @@ function SubtaskItem({
       return;
     }
     try {
-      await onCreateSubtask(subtaskTitle);
+      await onCreateSubtask(subtaskTitle, task.id);
       setSubtaskTitle("");
       setShowSubtaskInput(false);
     } catch (error) {
       toast.error("Failed to create subtask");
     }
   };
+
+  const handleUpdateTask = async () => {
+    if (!editTitle.trim()) {
+      toast.error("Task title cannot be empty");
+      return;
+    }
+    await updateTaskMutation.mutateAsync({
+      taskId: task.id,
+      title: editTitle,
+    });
+  };
+
+  if (isEditing) {
+    return (
+      <div className="bg-slate-600 rounded-lg p-3 border border-slate-500">
+        <div className="flex items-center gap-2">
+          <Input
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleUpdateTask()}
+            className="bg-slate-500 border-slate-400 text-white placeholder:text-slate-300 text-sm"
+            autoFocus
+          />
+          <Button
+            onClick={handleUpdateTask}
+            disabled={updateTaskMutation.isPending}
+            className="bg-blue-600 hover:bg-blue-700 text-xs px-2"
+          >
+            Save
+          </Button>
+          <Button
+            onClick={() => {
+              setIsEditing(false);
+              setEditTitle(task.title);
+            }}
+            variant="outline"
+            className="bg-slate-500 hover:bg-slate-400 text-white border-slate-400 text-xs px-2"
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-slate-600 rounded-lg p-3 border border-slate-500">
@@ -279,6 +393,22 @@ function SubtaskItem({
             title="Add subtask"
           >
             <Plus className="w-3 h-3" />
+          </button>
+
+          {/* Edit */}
+          <button
+            onClick={() => setIsEditing(true)}
+            className="p-1 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-white text-xs"
+            title="Edit"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
           </button>
 
           {/* Delete */}

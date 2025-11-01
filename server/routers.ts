@@ -11,6 +11,7 @@ import {
   getSubtasks,
   createTask,
   updateTaskCompletion,
+  updateTaskTitle,
   deleteTask,
   moveTaskToList,
   getTaskWithSubtasks,
@@ -178,6 +179,16 @@ export const appRouter = router({
       .input(z.object({ taskId: z.number(), newListId: z.number() }))
       .mutation(async ({ input }) => {
         const updated = await moveTaskToList(input.taskId, input.newListId);
+        return updated;
+      }),
+
+    /**
+     * Update task title
+     */
+    update: protectedProcedure
+      .input(z.object({ taskId: z.number(), title: z.string().min(1).max(255) }))
+      .mutation(async ({ input }) => {
+        const updated = await updateTaskTitle(input.taskId, input.title);
         return updated;
       }),
   }),
