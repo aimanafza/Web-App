@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, and, isNull, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, todoLists, tasks } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,225 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ============ TODO LIST QUERIES ============
+
+/**
+ * Get all todo lists for a user
+ */
+export async function getUserTodoLists(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(todoLists)
+    .where(eq(todoLists.userId, userId))
+    .orderBy(asc(todoLists.createdAt));
+}
+
+/**
+ * Create a new todo list
+ */
+export async function createTodoList(userId: number, name: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(todoLists).values({
+    userId,
+    name,
+  });
+
+  // Get the created list
+  const created = await db
+    .select()
+    .from(todoLists)
+    .where(and(eq(todoLists.userId, userId), eq(todoLists.name, name)))
+    .limit(1);
+
+  return created[0];
+}
+
+/**
+ * Delete a todo list and all its tasks
+ */
+export async function deleteTodoList(listId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Delete all tasks in this list
+  await db.delete(tasks).where(eq(tasks.listId, listId));
+
+  // Delete the list
+  await db
+    .delete(todoLists)
+    .where(and(eq(todoLists.id, listId), eq(todoLists.userId, userId)));
+}
+
+// ============ TASK QUERIES ============
+
+/**
+ * Get all top-level tasks for a list (parentTaskId is NULL)
+ */
+export async function getListTasks(listId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.listId, listId), isNull(tasks.parentTaskId)))
+    .orderBy(asc(tasks.order));
+}
+
+/**
+ * Get all subtasks for a parent task
+ */
+export async function getSubtasks(parentTaskId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.parentTaskId, parentTaskId))
+    .orderBy(asc(tasks.order));
+}
+
+/**
+ * Create a new task
+ */
+export async function createTask(
+  listId: number,
+  userId: number,
+  title: string,
+  parentTaskId?: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get the next order number
+  const maxOrder = await db
+    .select({ maxOrder: tasks.order })
+    .from(tasks)
+    .where(
+      parentTaskId
+        ? eq(tasks.parentTaskId, parentTaskId)
+        : and(eq(tasks.listId, listId), isNull(tasks.parentTaskId))
+    );
+
+  const nextOrder = (maxOrder[0]?.maxOrder ?? -1) + 1;
+
+  const result = await db.insert(tasks).values({
+    listId,
+    userId,
+    title,
+    parentTaskId: parentTaskId || null,
+    order: nextOrder,
+    completed: false,
+  });
+
+  // Get the created task
+  const created = await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.id, result[0].insertId))
+    .limit(1);
+
+  return created[0];
+}
+
+/**
+ * Update task completion status
+ */
+export async function updateTaskCompletion(taskId: number, completed: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(tasks).set({ completed }).where(eq(tasks.id, taskId));
+
+  const updated = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  return updated[0];
+}
+
+/**
+ * Delete a task and all its subtasks recursively
+ */
+export async function deleteTask(taskId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get all subtasks recursively
+  const subtasks = await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.parentTaskId, taskId));
+
+  // Delete all subtasks recursively
+  for (const subtask of subtasks) {
+    await deleteTask(subtask.id);
+  }
+
+  // Delete the task itself
+  await db.delete(tasks).where(eq(tasks.id, taskId));
+}
+
+/**
+ * Move a task to a different list (only for top-level tasks)
+ */
+export async function moveTaskToList(taskId: number, newListId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(tasks).set({ listId: newListId }).where(eq(tasks.id, taskId));
+
+  const updated = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  return updated[0];
+}
+
+/**
+ * Get task with all its subtasks recursively
+ */
+export async function getTaskWithSubtasks(taskId: number): Promise<any> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const task = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  if (!task[0]) return null;
+
+  const subtasks = await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.parentTaskId, taskId))
+    .orderBy(asc(tasks.order));
+
+  // Recursively get subtasks
+  const subtasksWithChildren = await Promise.all(
+    subtasks.map(async (subtask) => ({
+      ...subtask,
+      subtasks: await getTaskWithSubtasks(subtask.id),
+    }))
+  );
+
+  return {
+    ...task[0],
+    subtasks: subtasksWithChildren,
+  };
+}
+
+/**
+ * Calculate completion stats for a list
+ */
+export async function getListStats(listId: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, completed: 0 };
+
+  const allTasks = await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.listId, listId));
+
+  const total = allTasks.length;
+  const completed = allTasks.filter((t) => t.completed).length;
+
+  return { total, completed };
+}
