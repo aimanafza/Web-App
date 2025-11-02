@@ -6,7 +6,7 @@ A full-stack hierarchical todo application with **custom username/password authe
 
 ### Prerequisites
 - Node.js 18+ (with npm or pnpm)
-- MySQL 8.0+ or compatible database
+- No database server needed! Uses SQLite (file-based database)
 
 ### Installation
 
@@ -23,19 +23,18 @@ A full-stack hierarchical todo application with **custom username/password authe
    npm install
    ```
 
-3. **Set up environment variables:**
-   Create a `.env` file in the root directory:
-   ```env
-   DATABASE_URL=mysql://user:password@localhost:3306/hierarchical_todo_app
-   JWT_SECRET=your-secret-key-here-min-32-chars-long
+3. **Set up the database:**
+   ```bash
+   node init-db.mjs
    ```
-
-4. **Set up the database:**
+   This will create an `app.db` file in your project root (SQLite database) with all tables and a demo user.
+   
+   **Alternative (if using MySQL):**
    ```bash
    pnpm db:push
    ```
 
-5. **Start the development server:**
+4. **Start the development server:**
    ```bash
    pnpm dev
    ```
@@ -62,6 +61,7 @@ PORT=5002 pnpm dev
 
 ### ✅ Implemented
 - **Custom Authentication** - Username/password registration and login with JWT sessions
+- **SQLite Database** - File-based, no setup required, perfect for development
 - **Todo Lists** - Create, edit, and delete multiple todo lists
 - **Hierarchical Tasks** - Support for 3-level deep task nesting:
   - Level 1: Main tasks
@@ -94,6 +94,7 @@ hierarchical_todo_app/
 │   └── _core/             # Authentication & utilities
 ├── drizzle/               # Database schema & migrations
 │   └── schema.ts
+├── app.db                 # SQLite database (created after pnpm db:push)
 └── package.json
 ```
 
@@ -164,10 +165,11 @@ Edit `client/src/index.css` to modify the color scheme. The app uses CSS variabl
 
 ## 🐛 Troubleshooting
 
-### Database Connection Error
-- Verify MySQL is running
-- Check DATABASE_URL in `.env`
-- Ensure database exists: `CREATE DATABASE hierarchical_todo_app;`
+### Database Issues
+- **SQLite:** The database file is created automatically at `./app.db`
+  - To reset: Delete `app.db` and run `node init-db.mjs` again
+  - The demo user will be recreated automatically
+- **MySQL:** Make sure MySQL server is running and connection string is correct in `.env.local`
 
 ### Port Already in Use
 ```bash
@@ -189,9 +191,12 @@ pnpm install
 ```
 
 ### Login Not Working
-- Make sure the database is properly set up with `pnpm db:push`
-- Verify the demo user exists (it should be created automatically)
-- Check that JWT_SECRET is set in your `.env` file
+- Make sure the database is properly set up:
+  - For SQLite: Run `node init-db.mjs`
+  - For MySQL: Run `pnpm db:push`
+- Verify the demo user exists (username: `demo`, password: `demo123`)
+- Check that the dev server is running without errors
+- Try clearing browser cookies and logging in again
 
 ## 📦 Deployment
 
@@ -216,13 +221,13 @@ CMD ["pnpm", "start"]
 Build and run:
 ```bash
 docker build -t hierarchical-todo-app .
-docker run -p 3000:3000 -e DATABASE_URL=... hierarchical-todo-app
+docker run -p 3000:3000 hierarchical-todo-app
 ```
 
 ### Deploying to Railway/Render/DigitalOcean
 1. Push your code to GitHub (already done!)
 2. Connect your GitHub repository to your hosting platform
-3. Set environment variables (DATABASE_URL, JWT_SECRET)
+3. Set environment variables if needed (DATABASE_URL is optional for SQLite)
 4. Deploy and get a live URL with your custom domain
 
 ## 📝 License
