@@ -246,16 +246,43 @@ export async function createTask(
 }
 
 /**
- * Update task completion status
+ * Update task completion status with cascading to children
  */
 export async function updateTaskCompletion(taskId: number, completed: boolean) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Update the task itself
   await db.update(tasks).set({ completed }).where(eq(tasks.id, taskId));
+
+  // If marking as complete, cascade to all children recursively
+  if (completed) {
+    await cascadeCompletion(taskId, true);
+  }
 
   const updated = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
   return updated[0];
+}
+
+/**
+ * Recursively mark all subtasks as completed or incomplete
+ */
+async function cascadeCompletion(taskId: number, completed: boolean) {
+  const db = await getDb();
+  if (!db) return;
+
+  // Get all direct children
+  const children = await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.parentTaskId, taskId));
+
+  // Update each child and cascade further
+  for (const child of children) {
+    await db.update(tasks).set({ completed }).where(eq(tasks.id, child.id));
+    // Recursively cascade to grandchildren
+    await cascadeCompletion(child.id, completed);
+  }
 }
 
 /**
