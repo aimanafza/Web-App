@@ -1,8 +1,8 @@
 # Hierarchical Todo App - TODO
 
 ## Core Features
-- [x] User registration system (via Manus OAuth)
-- [x] User login system (via Manus OAuth)
+- [ ] User registration system (custom username/password)
+- [ ] User login system (custom username/password)
 - [x] Create todo lists
 - [x] Delete todo lists
 - [x] View list progress (completed/total tasks)
@@ -15,15 +15,15 @@
 - [x] Logout functionality
 
 ## UI/Layout
-- [x] Login page (via Manus OAuth)
-- [x] Registration page (via Manus OAuth)
+- [ ] Login page (custom form)
+- [ ] Registration page (custom form)
 - [x] Main dashboard with sidebar (My Lists)
 - [x] List cards with progress indicators
 - [x] Task list view with all action buttons
 - [ ] Responsive design for all pages (in progress)
 
 ## Backend
-- [x] User model and authentication (Manus OAuth)
+- [ ] User model and authentication (custom with password hashing)
 - [x] Todo list model
 - [x] Task model with hierarchy support
 - [x] Database migrations
@@ -33,10 +33,20 @@
 - [x] Edit button (blue pencil) doesn't work - need inline editing
 - [x] Sub-subtask creation (3-level hierarchy) - Add button doesn't work for subtasks of subtasks
 
-## New Bugs Found
-- [ ] Delete button doesn't work - confirmation appears but deletion doesn't execute
-- [ ] Checkbox for subtasks/sub-subtasks doesn't work - can't mark them as complete
-- [ ] Cascading completion - when parent marked done, children should auto-complete
+## Custom Authentication (NEW)
+- [ ] Replace Manus OAuth with username/password authentication
+- [ ] Create register endpoint with password hashing
+- [ ] Create login endpoint with JWT tokens
+- [ ] Create register page with form validation
+- [ ] Create login page with form validation
+- [ ] Update useAuth hook for custom auth
+- [ ] Add logout functionality
+
+## Fixed Issues
+- [x] Delete button - confirmation dialog working
+- [x] Checkbox for subtasks/sub-subtasks - now working
+- [x] Cascading completion - when parent marked done, children auto-complete
+- [x] List progress metrics - update in real-time
 
 ## Testing
 - [x] Test registration flow
