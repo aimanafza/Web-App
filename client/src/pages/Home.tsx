@@ -81,6 +81,7 @@ export default function Home() {
   const toggleTaskMutation = trpc.task.toggleCompletion.useMutation({
     onSuccess: () => {
       refetchTasks();
+      refetchLists();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -90,6 +91,7 @@ export default function Home() {
   const deleteTaskMutation = trpc.task.delete.useMutation({
     onSuccess: () => {
       refetchTasks();
+      refetchLists();
       toast.success("Task deleted!");
     },
     onError: (error) => {
@@ -99,11 +101,11 @@ export default function Home() {
 
   const moveTaskMutation = trpc.task.moveToList.useMutation({
     onSuccess: () => {
-      setMoveTaskId(null);
-      setMoveTargetListId("");
       refetchTasks();
       refetchLists();
       toast.success("Task moved!");
+      setMoveTaskId(null);
+      setMoveTargetListId("");
     },
     onError: (error) => {
       toast.error(error.message);
