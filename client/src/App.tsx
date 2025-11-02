@@ -5,6 +5,8 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
@@ -24,10 +26,19 @@ function Router() {
 
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
+      {isAuthenticated ? (
+        <>
+          <Route path={"/"} component={Home} />
+          <Route path={"/404"} component={NotFound} />
+          <Route component={NotFound} />
+        </>
+      ) : (
+        <>
+          <Route path={"/login"} component={Login} />
+          <Route path={"/register"} component={Register} />
+          <Route path={"*"} component={Login} />
+        </>
+      )}
     </Switch>
   );
 }

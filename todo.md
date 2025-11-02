@@ -1,8 +1,8 @@
 # Hierarchical Todo App - TODO
 
 ## Core Features
-- [ ] User registration system (custom username/password)
-- [ ] User login system (custom username/password)
+- [x] User registration system (custom username/password)
+- [x] User login system (custom username/password)
 - [x] Create todo lists
 - [x] Delete todo lists
 - [x] View list progress (completed/total tasks)
@@ -15,15 +15,15 @@
 - [x] Logout functionality
 
 ## UI/Layout
-- [ ] Login page (custom form)
-- [ ] Registration page (custom form)
+- [x] Login page (custom form)
+- [x] Registration page (custom form)
 - [x] Main dashboard with sidebar (My Lists)
 - [x] List cards with progress indicators
 - [x] Task list view with all action buttons
-- [ ] Responsive design for all pages (in progress)
+- [x] Responsive design for all pages
 
 ## Backend
-- [ ] User model and authentication (custom with password hashing)
+- [x] User model and authentication (custom with password hashing)
 - [x] Todo list model
 - [x] Task model with hierarchy support
 - [x] Database migrations
@@ -34,13 +34,13 @@
 - [x] Sub-subtask creation (3-level hierarchy) - Add button doesn't work for subtasks of subtasks
 
 ## Custom Authentication (NEW)
-- [ ] Replace Manus OAuth with username/password authentication
-- [ ] Create register endpoint with password hashing
-- [ ] Create login endpoint with JWT tokens
-- [ ] Create register page with form validation
-- [ ] Create login page with form validation
-- [ ] Update useAuth hook for custom auth
-- [ ] Add logout functionality
+- [x] Replace Manus OAuth with username/password authentication
+- [x] Create register endpoint with password hashing
+- [x] Create login endpoint with JWT tokens
+- [x] Create register page with form validation
+- [x] Create login page with form validation
+- [x] Update useAuth hook for custom auth
+- [x] Add logout functionality
 
 ## Fixed Issues
 - [x] Delete button - confirmation dialog working

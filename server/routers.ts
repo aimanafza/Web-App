@@ -3,6 +3,8 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
+import * as bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
 import {
   getUserTodoLists,
   createTodoList,
@@ -16,12 +18,74 @@ import {
   moveTaskToList,
   getTaskWithSubtasks,
   getListStats,
+  getDb,
+  users,
 } from "./db";
 
 export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    
+    register: publicProcedure
+      .input(z.object({
+        username: z.string().min(3, "Username must be at least 3 characters").max(64),
+        email: z.string().email("Invalid email"),
+        password: z.string().min(6, "Password must be at least 6 characters"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        
+        // Check if user already exists
+        const existing = await db.select().from(users).where(eq(users.username, input.username)).limit(1);
+        if (existing.length > 0) throw new Error("Username already taken");
+        
+        // Hash password
+        const passwordHash = await bcrypt.hash(input.password, 10);
+        
+        // Create user
+        await db.insert(users).values({
+          username: input.username,
+          email: input.email,
+          passwordHash,
+          name: input.username,
+          loginMethod: "custom",
+          lastSignedIn: new Date(),
+        });
+        
+        return { success: true };
+      }),
+    
+    login: publicProcedure
+      .input(z.object({
+        username: z.string(),
+        password: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        
+        // Find user
+        const userList = await db.select().from(users).where(eq(users.username, input.username)).limit(1);
+        if (userList.length === 0) throw new Error("Invalid username or password");
+        const user = userList[0];
+        
+        // Check password
+        const passwordValid = await bcrypt.compare(input.password, user.passwordHash || "");
+        if (!passwordValid) throw new Error("Invalid username or password");
+        
+        // Update last signed in
+        await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
+        
+        // Create session cookie
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        const sessionToken = Buffer.from(JSON.stringify({ userId: user.id, username: user.username })).toString("base64");
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
+        
+        return { success: true, user: { id: user.id, username: user.username, email: user.email } };
+      }),
+    
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

@@ -3,6 +3,9 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, todoLists, tasks } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
+// Export schema tables for use in routers
+export { users, todoLists, tasks };
+
 let _db: ReturnType<typeof drizzle> | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
