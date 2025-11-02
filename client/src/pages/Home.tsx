@@ -363,10 +363,10 @@ export default function Home() {
       {/* Delete Task Dialog */}
       {deleteTaskId && (
         <Dialog open={deleteTaskId !== null} onOpenChange={() => setDeleteTaskId(null)}>
-          <DialogContent className="bg-slate-800 border-slate-700">
+          <DialogContent className="bg-slate-700 border-slate-600">
             <DialogHeader>
-              <DialogTitle>Delete Task</DialogTitle>
-              <DialogDescription>Are you sure you want to delete this task? This action cannot be undone.</DialogDescription>
+              <DialogTitle className="text-white">Delete Task</DialogTitle>
+              <DialogDescription className="text-slate-300">Are you sure you want to delete this task? This action cannot be undone.</DialogDescription>
             </DialogHeader>
             <div className="flex gap-3">
               <Button
@@ -391,16 +391,16 @@ export default function Home() {
       {/* Move Task Dialog */}
       {moveTaskId && (
         <Dialog open={moveTaskId !== null} onOpenChange={() => setMoveTaskId(null)}>
-          <DialogContent className="bg-slate-800 border-slate-700">
+          <DialogContent className="bg-slate-700 border-slate-600">
             <DialogHeader>
-              <DialogTitle>Move Task</DialogTitle>
-              <DialogDescription>Select a list to move this task to</DialogDescription>
+              <DialogTitle className="text-white">Move Task</DialogTitle>
+              <DialogDescription className="text-slate-300">Select a list to move this task to</DialogDescription>
             </DialogHeader>
             <Select value={moveTargetListId} onValueChange={setMoveTargetListId}>
-              <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+              <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
                 <SelectValue placeholder="Select a list" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-700 border-slate-600">
+              <SelectContent className="bg-slate-600 border-slate-500">
                 {lists
                   .filter((l) => l.id !== selectedListId)
                   .map((list) => (

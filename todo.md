@@ -68,3 +68,7 @@
 - [x] Need to refresh page or manually navigate to see the home page
 - [x] Fix tRPC client-server communication - JWT token creation and verification
 - [x] Session persistence across page refreshes
+
+## UI Improvements
+- [x] Improve move task popup readability - lighter colors and better contrast
+- [x] Improve delete task popup readability - lighter colors and better contrast
