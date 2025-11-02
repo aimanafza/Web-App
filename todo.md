@@ -61,3 +61,10 @@
 
 ## Current Issues to Fix
 - [x] Fix React.Fragment prop error - "Invalid prop `match` supplied to `React.Fragment`" in App.tsx routing
+
+## New Issues to Fix
+- [x] Login/registration doesn't redirect to home page after successful authentication
+- [x] Authentication state not being updated after login/register
+- [x] Need to refresh page or manually navigate to see the home page
+- [x] Fix tRPC client-server communication - JWT token creation and verification
+- [x] Session persistence across page refreshes

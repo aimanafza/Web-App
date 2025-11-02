@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -11,10 +10,10 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const utils = trpc.useUtils();
   const loginMutation = trpc.auth.login.useMutation();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     if (!username || !password) {
       toast.error("Please fill in all fields");
       return;
@@ -22,10 +21,15 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      await loginMutation.mutateAsync({ username, password });
+      console.log('Calling login mutation with:', { username, password });
+      const result = await loginMutation.mutateAsync({ username, password });
+      console.log('Login result:', result);
+      await utils.auth.me.invalidate();
+      console.log('Auth invalidated');
       toast.success("Login successful!");
       setLocation("/");
     } catch (error) {
+      console.error('Login error:', error);
       toast.error(error instanceof Error ? error.message : "Login failed");
     } finally {
       setIsLoading(false);
@@ -38,7 +42,7 @@ export default function Login() {
         <h1 className="text-3xl font-bold text-center mb-2">Welcome Back</h1>
         <p className="text-gray-600 text-center mb-6">Sign in to your account</p>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Username
@@ -67,14 +71,14 @@ export default function Login() {
             />
           </div>
 
-          <Button
-            type="submit"
+          <button
+            onClick={handleLogin}
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
           >
             {isLoading ? "Signing in..." : "Sign In"}
-          </Button>
-        </form>
+          </button>
+        </div>
 
         <div className="mt-6 text-center">
           <p className="text-gray-600">

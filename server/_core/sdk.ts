@@ -6,6 +6,8 @@ import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
+import { eq } from "drizzle-orm";
+import { users, getDb } from "../db";
 import { ENV } from "./env";
 import type {
   ExchangeTokenRequest,
@@ -206,10 +208,12 @@ class SDKServer {
     }
 
     try {
+      console.log('[Auth] Verifying session, cookie starts with:', cookieValue.substring(0, 30));
       const secretKey = this.getSessionSecret();
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
+      console.log('[Auth] JWT verified, payload:', payload);
       const { openId, appId, name } = payload as Record<string, unknown>;
 
       if (
@@ -227,7 +231,7 @@ class SDKServer {
         name,
       };
     } catch (error) {
-      console.warn("[Auth] Session verification failed", String(error));
+      console.warn('[Auth] Session verification failed:', error instanceof Error ? error.message : String(error));
       return null;
     }
   }
@@ -268,24 +272,45 @@ class SDKServer {
 
     const sessionUserId = session.openId;
     const signedInAt = new Date();
-    let user = await db.getUserByOpenId(sessionUserId);
+    let user: User | null = null;
 
-    // If user not in DB, sync from OAuth server automatically
-    if (!user) {
-      try {
-        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
-        await db.upsertUser({
-          openId: userInfo.openId,
-          username: userInfo.name || `oauth_${userInfo.openId.substring(0, 8)}`,
-          name: userInfo.name || null,
-          email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-          lastSignedIn: signedInAt,
-        });
-        user = await db.getUserByOpenId(userInfo.openId);
-      } catch (error) {
-        console.error("[Auth] Failed to sync user from OAuth:", error);
-        throw ForbiddenError("Failed to sync user info");
+    // Check if this is custom authentication
+    if (session.appId === "custom-auth") {
+      // For custom auth, openId contains the user id
+      const userId = parseInt(sessionUserId, 10);
+      if (isNaN(userId)) {
+        throw ForbiddenError("Invalid user ID in session");
+      }
+      
+      // Look up user by id from the database
+      const db_instance = await getDb();
+      if (db_instance) {
+        const userList = await db_instance.select().from(users).where(eq(users.id, userId)).limit(1);
+        user = userList.length > 0 ? userList[0] : null;
+      }
+    } else {
+      // OAuth flow
+      const oauthUser = await db.getUserByOpenId(sessionUserId);
+      user = oauthUser ?? null;
+
+      // If user not in DB, sync from OAuth server automatically
+      if (!user) {
+        try {
+          const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
+          await db.upsertUser({
+            openId: userInfo.openId,
+            username: userInfo.name || `oauth_${userInfo.openId.substring(0, 8)}`,
+            name: userInfo.name || null,
+            email: userInfo.email ?? null,
+            loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+            lastSignedIn: signedInAt,
+          });
+          const oauthUserAfterSync = await db.getUserByOpenId(userInfo.openId);
+          user = oauthUserAfterSync ?? null;
+        } catch (error) {
+          console.error("[Auth] Failed to sync user from OAuth:", error);
+          throw ForbiddenError("Failed to sync user info");
+        }
       }
     }
 
@@ -293,11 +318,19 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
-    await db.upsertUser({
-      openId: user.openId,
-      username: user.username,
-      lastSignedIn: signedInAt,
-    });
+    // Update last signed in for both OAuth and custom auth
+    if (session.appId === "custom-auth") {
+      const db_instance = await getDb();
+      if (db_instance) {
+        await db_instance.update(users).set({ lastSignedIn: signedInAt }).where(eq(users.id, user.id));
+      }
+    } else {
+      await db.upsertUser({
+        openId: user.openId,
+        username: user.username,
+        lastSignedIn: signedInAt,
+      });
+    }
 
     return user;
   }

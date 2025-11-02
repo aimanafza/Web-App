@@ -13,7 +13,9 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const utils = trpc.useUtils();
   const registerMutation = trpc.auth.register.useMutation();
+  const loginMutation = trpc.auth.login.useMutation();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +38,10 @@ export default function Register() {
     setIsLoading(true);
     try {
       await registerMutation.mutateAsync({ username, email, password });
-      toast.success("Account created! Please sign in.");
-      setLocation("/login");
+      await loginMutation.mutateAsync({ username, password });
+      await utils.auth.me.invalidate();
+      toast.success("Account created and logged in!");
+      setLocation("/");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Registration failed");
     } finally {

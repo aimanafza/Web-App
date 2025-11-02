@@ -1,7 +1,8 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
+import { sdk } from "./_core/sdk";
 import { z } from "zod";
 import * as bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
@@ -63,8 +64,10 @@ export const appRouter = router({
         password: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
+        console.log('[LOGIN] Received login request with input:', input);
         const db = await getDb();
         if (!db) throw new Error("Database not available");
+        console.log('[LOGIN] Database available, looking up user:', input.username);
         
         // Find user
         const userList = await db.select().from(users).where(eq(users.username, input.username)).limit(1);
@@ -78,10 +81,18 @@ export const appRouter = router({
         // Update last signed in
         await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
         
-        // Create session cookie
+        // Create session cookie using JWT
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        const sessionToken = Buffer.from(JSON.stringify({ userId: user.id, username: user.username })).toString("base64");
-        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
+        console.log('[LOGIN] Creating session token for user:', user.id, user.username);
+        const sessionToken = await sdk.signSession({
+          openId: String(user.id),
+          appId: "custom-auth",
+          name: user.username,
+        });
+        console.log('[LOGIN] Session token created:', sessionToken.substring(0, 50));
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+        console.log('[LOGIN] Session cookie set');
+
         
         return { success: true, user: { id: user.id, username: user.username, email: user.email } };
       }),
