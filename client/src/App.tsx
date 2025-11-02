@@ -24,21 +24,21 @@ function Router() {
     );
   }
 
+  if (isAuthenticated) {
+    return (
+      <Switch>
+        <Route path={"/"} component={Home} />
+        <Route path={"/404"} component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    );
+  }
+
   return (
     <Switch>
-      {isAuthenticated ? (
-        <>
-          <Route path={"/"} component={Home} />
-          <Route path={"/404"} component={NotFound} />
-          <Route component={NotFound} />
-        </>
-      ) : (
-        <>
-          <Route path={"/login"} component={Login} />
-          <Route path={"/register"} component={Register} />
-          <Route path={"*"} component={Login} />
-        </>
-      )}
+      <Route path={"/login"} component={Login} />
+      <Route path={"/register"} component={Register} />
+      <Route path={"*"} component={Login} />
     </Switch>
   );
 }

@@ -57,3 +57,7 @@
 - [x] Test progress calculation
 - [x] Test edit functionality
 - [x] Test 3-level hierarchy (sub-subtasks)
+
+
+## Current Issues to Fix
+- [x] Fix React.Fragment prop error - "Invalid prop `match` supplied to `React.Fragment`" in App.tsx routing
